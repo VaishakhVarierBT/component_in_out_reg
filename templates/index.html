@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Component In/Out Register</title>
+
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
+
+
+</head>
+
+
+<body>
+
+
+<div class="container">
+
+
+    <!-- ====================================================
+         HEADER
+    ===================================================== -->
+
+    <header>
+
+        <div>
+
+            <h1>
+                Component In/Out Register
+            </h1>
+
+            <span class="live">
+                ● LIVE
+            </span>
+
+        </div>
+
+
+        <div class="user-section">
+
+            <span>
+                {{ current_user.full_name }}
+            </span>
+
+            <a href="/logout">
+                Logout
+            </a>
+
+        </div>
+
+    </header>
+
+
+    <!-- ====================================================
+         STATISTICS
+    ===================================================== -->
+
+    <section class="stats">
+
+
+        <div class="stat-card">
+
+            <span>
+                Total Components
+            </span>
+
+            <strong id="totalComponents">
+                0
+            </strong>
+
+        </div>
+
+
+        <div class="stat-card">
+
+            <span>
+                Currently OUT
+            </span>
+
+            <strong id="currentlyOut">
+                0
+            </strong>
+
+        </div>
+
+
+        <div class="stat-card">
+
+            <span>
+                Available
+            </span>
+
+            <strong id="availableComponents">
+                0
+            </strong>
+
+        </div>
+
+
+    </section>
+
+
+
+    <!-- ====================================================
+         TAKE COMPONENT
+    ===================================================== -->
+
+    <section class="card">
+
+        <h2>
+            Take Component
+        </h2>
+
+
+        <form id="outForm">
+
+
+            <div class="form-grid">
+
+
+                <div>
+
+                    <label>
+                        Component
+                    </label>
+
+                    <select
+                        id="componentSelect"
+                        required
+                    >
+
+                        <option value="">
+                            Select component
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <div>
+
+                    <label>
+                        Employee
+                    </label>
+
+                    <select
+                        id="employeeSelect"
+                        required
+                    >
+
+                        <option value="">
+                            Select employee
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+            </div>
+
+
+            <button type="submit">
+                Mark OUT
+            </button>
+
+
+        </form>
+
+    </section>
+
+
+
+    <!-- ====================================================
+         ADD COMPONENT / EMPLOYEE
+    ===================================================== -->
+
+    <section class="card">
+
+
+        <div class="form-grid">
+
+
+            <div>
+
+                <h2>
+                    Add Component
+                </h2>
+
+
+                <form id="componentForm">
+
+                    <label>
+                        Component ID
+                    </label>
+
+                    <input
+                        type="text"
+                        id="newComponentId"
+                        placeholder="e.g. STM32-001"
+                        required
+                    >
+
+
+                    <label>
+                        Component Name
+                    </label>
+
+                    <input
+                        type="text"
+                        id="newComponentName"
+                        placeholder="e.g. STM32 Nucleo F401"
+                        required
+                    >
+
+
+                    <button type="submit">
+                        Add Component
+                    </button>
+
+                </form>
+
+            </div>
+
+
+
+            <div>
+
+                <h2>
+                    Add Employee
+                </h2>
+
+
+                <form id="employeeForm">
+
+                    <label>
+                        Employee Name
+                    </label>
+
+                    <input
+                        type="text"
+                        id="newEmployeeName"
+                        placeholder="Employee name"
+                        required
+                    >
+
+
+                    <label>
+                        Designation
+                    </label>
+
+                    <input
+                        type="text"
+                        id="newDesignation"
+                        placeholder="Designation"
+                        required
+                    >
+
+
+                    <button type="submit">
+                        Add Employee
+                    </button>
+
+                </form>
+
+            </div>
+
+
+        </div>
+
+
+    </section>
+
+
+
+    <!-- ====================================================
+         CURRENTLY OUT
+    ===================================================== -->
+
+    <section class="card">
+
+
+        <div class="section-header">
+
+            <h2>
+                Currently OUT
+            </h2>
+
+            <span
+                id="outCount"
+                class="count"
+            >
+                0
+            </span>
+
+        </div>
+
+
+        <input
+            type="text"
+            id="searchOut"
+            class="search"
+            placeholder="Search component or employee..."
+        >
+
+
+        <div class="table-container">
+
+            <table>
+
+                <thead>
+
+                    <tr>
+
+                        <th>
+                            Component ID
+                        </th>
+
+                        <th>
+                            Component
+                        </th>
+
+                        <th>
+                            Employee
+                        </th>
+
+                        <th>
+                            Designation
+                        </th>
+
+                        <th>
+                            OUT Time
+                        </th>
+
+                        <th>
+                            Recorded By
+                        </th>
+
+                        <th>
+                            Action
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody id="outTable">
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- ====================================================
+         HISTORY
+    ===================================================== -->
+
+    <section class="card">
+
+
+        <h2>
+            Complete History
+        </h2>
+
+
+        <input
+            type="text"
+            id="searchHistory"
+            class="search"
+            placeholder="Search history..."
+        >
+
+
+        <div class="table-container">
+
+            <table>
+
+                <thead>
+
+                    <tr>
+
+                        <th>
+                            Component ID
+                        </th>
+
+                        <th>
+                            Component
+                        </th>
+
+                        <th>
+                            Employee
+                        </th>
+
+                        <th>
+                            Designation
+                        </th>
+
+                        <th>
+                            OUT Time
+                        </th>
+
+                        <th>
+                            Returned Time
+                        </th>
+
+                        <th>
+                            Recorded By
+                        </th>
+
+                        <th>
+                            Status
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody id="historyTable">
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </section>
+
+
+</div>
+
+
+
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+
+<script src="{{ url_for('static', filename='script.js') }}"></script>
+
+
+</body>
+
+</html>
