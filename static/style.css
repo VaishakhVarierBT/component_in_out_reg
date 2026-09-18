@@ -19,11 +19,166 @@ body {
 }
 
 
-.container {
+/* =========================================================
+   APP LAYOUT
+========================================================= */
+
+.app-layout {
+
+    display: flex;
+
+    min-height: 100vh;
+
+}
+
+
+/* =========================================================
+   SIDEBAR
+========================================================= */
+
+.sidebar {
+
+    width: 240px;
+
+    background: #1f2937;
+
+    color: white;
+
+    display: flex;
+
+    flex-direction: column;
+
+    position: fixed;
+
+    left: 0;
+
+    top: 0;
+
+    bottom: 0;
+
+}
+
+
+.sidebar-header {
+
+    padding: 25px 20px;
+
+    border-bottom:
+        1px solid #374151;
+
+}
+
+
+.sidebar-header h2 {
+
+    margin: 0;
+
+    font-size: 20px;
+
+}
+
+
+.sidebar-nav {
+
+    display: flex;
+
+    flex-direction: column;
+
+    padding: 15px 10px;
+
+    gap: 5px;
+
+}
+
+
+.nav-item {
+
+    width: 100%;
+
+    padding: 13px 15px;
+
+    background: transparent;
+
+    color: #d1d5db;
+
+    border: none;
+
+    border-radius: 6px;
+
+    text-align: left;
+
+    font-size: 14px;
+
+    font-weight: bold;
+
+    cursor: pointer;
+
+}
+
+
+.nav-item:hover {
+
+    background: #374151;
+
+    color: white;
+
+}
+
+
+.nav-item.active {
+
+    background: #1769aa;
+
+    color: white;
+
+}
+
+
+.sidebar-footer {
+
+    margin-top: auto;
+
+    padding: 20px;
+
+    border-top:
+        1px solid #374151;
+
+}
+
+
+.logout-link {
+
+    display: block;
+
+    text-decoration: none;
+
+    color: #fca5a5;
+
+    font-weight: bold;
+
+    padding: 10px 5px;
+
+}
+
+
+.logout-link:hover {
+
+    color: #ef4444;
+
+}
+
+
+/* =========================================================
+   MAIN CONTENT
+========================================================= */
+
+.main-content {
+
+    margin-left: 240px;
+
+    width: calc(100% - 240px);
 
     max-width: 1500px;
-
-    margin: auto;
 
     padding: 25px;
 
@@ -83,6 +238,24 @@ header h1 {
     color: #c62828;
 
     font-weight: bold;
+
+}
+
+
+/* =========================================================
+   PAGE SECTIONS
+========================================================= */
+
+.page-section {
+
+    width: 100%;
+
+}
+
+
+.active-section {
+
+    display: block;
 
 }
 
@@ -427,10 +600,45 @@ td {
 
 
 /* =========================================================
+   OTHER EMPLOYEE
+========================================================= */
+
+.other-employee-fields {
+
+    background: #f8f9fa;
+
+    padding: 15px;
+
+    border-radius: 8px;
+
+    border: 1px solid #ddd;
+
+}
+
+
+/* =========================================================
    MOBILE
 ========================================================= */
 
 @media (max-width: 800px) {
+
+    .sidebar {
+
+        width: 190px;
+
+    }
+
+
+    .main-content {
+
+        margin-left: 190px;
+
+        width: calc(100% - 190px);
+
+        padding: 15px;
+
+    }
+
 
     .form-grid {
 
@@ -453,6 +661,62 @@ td {
         align-items: flex-start;
 
         gap: 15px;
+
+    }
+
+}
+
+
+@media (max-width: 600px) {
+
+    .sidebar {
+
+        width: 100%;
+
+        height: auto;
+
+        position: relative;
+
+        min-height: auto;
+
+    }
+
+
+    .app-layout {
+
+        flex-direction: column;
+
+    }
+
+
+    .sidebar-nav {
+
+        flex-direction: row;
+
+        flex-wrap: wrap;
+
+    }
+
+
+    .nav-item {
+
+        width: auto;
+
+    }
+
+
+    .sidebar-footer {
+
+        margin-top: 0;
+
+    }
+
+
+    .main-content {
+
+        margin-left: 0;
+
+        width: 100%;
 
     }
 

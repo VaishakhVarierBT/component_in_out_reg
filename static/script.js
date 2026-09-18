@@ -9,6 +9,54 @@ let employees = [];
 
 
 // ============================================================
+// SIDEBAR NAVIGATION
+// ============================================================
+
+function showSection(sectionId, clickedButton) {
+
+    const sections =
+        document.querySelectorAll(".page-section");
+
+
+    sections.forEach(function(section) {
+
+        section.style.display = "none";
+
+    });
+
+
+    const selectedSection =
+        document.getElementById(sectionId);
+
+
+    if (selectedSection) {
+
+        selectedSection.style.display = "block";
+
+    }
+
+
+    const navItems =
+        document.querySelectorAll(".nav-item");
+
+
+    navItems.forEach(function(item) {
+
+        item.classList.remove("active");
+
+    });
+
+
+    if (clickedButton) {
+
+        clickedButton.classList.add("active");
+
+    }
+
+}
+
+
+// ============================================================
 // LOAD EVERYTHING
 // ============================================================
 
@@ -33,6 +81,7 @@ async function loadComponents() {
 
     const response =
         await fetch("/api/components");
+
 
     components =
         await response.json();
@@ -73,10 +122,10 @@ function renderComponentDropdown() {
 
 
         option.textContent =
-            `${component.component_id} - ${component.component_name} [${component.status}]`;
+            `${component.component_name} [Available: ${component.available_quantity}]`;
 
 
-        if (component.status === "OUT") {
+        if (component.available_quantity <= 0) {
 
             option.disabled = true;
 
@@ -98,6 +147,7 @@ async function loadEmployees() {
 
     const response =
         await fetch("/api/employees");
+
 
     employees =
         await response.json();
@@ -143,7 +193,81 @@ function renderEmployeeDropdown() {
 
     });
 
+
+    // --------------------------------------------------------
+    // OTHER OPTION
+    // --------------------------------------------------------
+
+    const otherOption =
+        document.createElement("option");
+
+
+    otherOption.value = "other";
+
+    otherOption.textContent = "Other";
+
+
+    select.appendChild(otherOption);
+
 }
+
+
+// ============================================================
+// OTHER EMPLOYEE
+// ============================================================
+
+document
+    .getElementById("employeeSelect")
+    .addEventListener(
+        "change",
+        function() {
+
+            const otherFields =
+                document.getElementById(
+                    "otherEmployeeFields"
+                );
+
+
+            const nameInput =
+                document.getElementById(
+                    "otherEmployeeName"
+                );
+
+
+            const designationInput =
+                document.getElementById(
+                    "otherDesignation"
+                );
+
+
+            if (this.value === "other") {
+
+                otherFields.style.display =
+                    "block";
+
+                nameInput.required = true;
+
+                designationInput.required = true;
+
+            }
+
+            else {
+
+                otherFields.style.display =
+                    "none";
+
+                nameInput.required = false;
+
+                designationInput.required = false;
+
+                nameInput.value = "";
+
+                designationInput.value = "";
+
+            }
+
+        }
+    );
 
 
 // ============================================================
@@ -154,6 +278,7 @@ async function loadRecords() {
 
     const response =
         await fetch("/api/records");
+
 
     records =
         await response.json();
@@ -185,16 +310,64 @@ document
                 ).value;
 
 
+            const quantity =
+                document.getElementById(
+                    "quantitySelect"
+                ).value;
+
+
             const employee =
                 document.getElementById(
                     "employeeSelect"
                 ).value;
 
 
+            const otherEmployeeName =
+                document.getElementById(
+                    "otherEmployeeName"
+                ).value.trim();
+
+
+            const otherDesignation =
+                document.getElementById(
+                    "otherDesignation"
+                ).value.trim();
+
+
             if (!component || !employee) {
 
                 alert(
                     "Please select a component and employee."
+                );
+
+                return;
+
+            }
+
+
+            if (!quantity || Number(quantity) <= 0) {
+
+                alert(
+                    "Please enter a valid quantity."
+                );
+
+                return;
+
+            }
+
+
+            if (
+                employee === "other"
+                &&
+                (
+                    !otherEmployeeName
+                    ||
+                    !otherDesignation
+                )
+            ) {
+
+                alert(
+                    "Please enter the employee name and designation."
                 );
 
                 return;
@@ -222,8 +395,17 @@ document
                                 component_database_id:
                                     component,
 
+                                quantity:
+                                    Number(quantity),
+
                                 employee_id:
-                                    employee
+                                    employee,
+
+                                other_employee_name:
+                                    otherEmployeeName,
+
+                                other_designation:
+                                    otherDesignation
 
                             })
 
@@ -248,6 +430,27 @@ document
                 .getElementById("outForm")
                 .reset();
 
+
+            document
+                .getElementById(
+                    "otherEmployeeFields"
+                )
+                .style.display = "none";
+
+
+            document
+                .getElementById(
+                    "otherEmployeeName"
+                )
+                .required = false;
+
+
+            document
+                .getElementById(
+                    "otherDesignation"
+                )
+                .required = false;
+
         }
     );
 
@@ -265,15 +468,15 @@ document
             event.preventDefault();
 
 
-            const componentId =
-                document.getElementById(
-                    "newComponentId"
-                ).value;
-
-
             const componentName =
                 document.getElementById(
                     "newComponentName"
+                ).value.trim();
+
+
+            const quantity =
+                document.getElementById(
+                    "newComponentQuantity"
                 ).value;
 
 
@@ -294,11 +497,11 @@ document
                         body:
                             JSON.stringify({
 
-                                component_id:
-                                    componentId,
-
                                 component_name:
-                                    componentName
+                                    componentName,
+
+                                quantity:
+                                    Number(quantity)
 
                             })
 
@@ -414,9 +617,63 @@ document
 
 async function returnComponent(id) {
 
+    const record =
+        records.find(
+            r => r.id === id
+        );
+
+
+    if (!record) {
+
+        return;
+
+    }
+
+
+    const remaining =
+        Number(record.quantity_out)
+        -
+        Number(record.quantity_returned);
+
+
+    const quantity =
+        prompt(
+            `How many units are being returned?\n\nRemaining OUT: ${remaining}`,
+            remaining
+        );
+
+
+    if (quantity === null) {
+
+        return;
+
+    }
+
+
+    const returnQuantity =
+        Number(quantity);
+
+
+    if (
+        !Number.isInteger(returnQuantity)
+        ||
+        returnQuantity <= 0
+        ||
+        returnQuantity > remaining
+    ) {
+
+        alert(
+            `Please enter a quantity between 1 and ${remaining}.`
+        );
+
+        return;
+
+    }
+
+
     const confirmation =
         confirm(
-            "Mark this component as returned?"
+            `Return ${returnQuantity} unit(s)?`
         );
 
 
@@ -432,7 +689,22 @@ async function returnComponent(id) {
             `/api/records/${id}/return`,
             {
 
-                method: "PUT"
+                method: "PUT",
+
+                headers: {
+
+                    "Content-Type":
+                        "application/json"
+
+                },
+
+                body:
+                    JSON.stringify({
+
+                        quantity_returned:
+                            returnQuantity
+
+                    })
 
             }
         );
@@ -474,6 +746,8 @@ function renderOutTable() {
 
             if (
                 record.status !== "OUT"
+                &&
+                record.status !== "PARTIALLY RETURNED"
             ) {
 
                 return false;
@@ -482,12 +756,6 @@ function renderOutTable() {
 
 
             return (
-
-                record.component_id
-                    .toLowerCase()
-                    .includes(search)
-
-                ||
 
                 record.component_name
                     .toLowerCase()
@@ -525,18 +793,30 @@ function renderOutTable() {
             document.createElement("tr");
 
 
-        row.innerHTML = `
+        const remaining =
+            Number(record.quantity_out)
+            -
+            Number(record.quantity_returned);
 
-            <td>
-                ${escapeHtml(
-                    record.component_id
-                )}
-            </td>
+
+        row.innerHTML = `
 
             <td>
                 ${escapeHtml(
                     record.component_name
                 )}
+            </td>
+
+            <td>
+                ${record.quantity_out}
+            </td>
+
+            <td>
+                ${record.quantity_returned}
+            </td>
+
+            <td>
+                ${remaining}
             </td>
 
             <td>
@@ -567,7 +847,9 @@ function renderOutTable() {
                     class="return-btn"
                     onclick="returnComponent(${record.id})"
                 >
-                    Mark Returned
+
+                    Return
+
                 </button>
 
             </td>
@@ -605,12 +887,6 @@ function renderHistory() {
 
             return (
 
-                record.component_id
-                    .toLowerCase()
-                    .includes(search)
-
-                ||
-
                 record.component_name
                     .toLowerCase()
                     .includes(search)
@@ -633,6 +909,12 @@ function renderHistory() {
                     .toLowerCase()
                     .includes(search)
 
+                ||
+
+                record.status
+                    .toLowerCase()
+                    .includes(search)
+
             );
 
         });
@@ -649,7 +931,11 @@ function renderHistory() {
 
         const statusClass =
             record.status === "OUT"
+            ||
+            record.status === "PARTIALLY RETURNED"
+
                 ? "status-out"
+
                 : "status-returned";
 
 
@@ -657,14 +943,16 @@ function renderHistory() {
 
             <td>
                 ${escapeHtml(
-                    record.component_id
+                    record.component_name
                 )}
             </td>
 
             <td>
-                ${escapeHtml(
-                    record.component_name
-                )}
+                ${record.quantity_out}
+            </td>
+
+            <td>
+                ${record.quantity_returned}
             </td>
 
             <td>
@@ -727,18 +1015,25 @@ function renderTables() {
 function updateStatistics() {
 
     const total =
-        components.length;
-
-
-    const out =
-        components.filter(
-            component =>
-                component.status === "OUT"
-        ).length;
+        components.reduce(
+            (sum, component) =>
+                sum +
+                Number(component.total_quantity),
+            0
+        );
 
 
     const available =
-        total - out;
+        components.reduce(
+            (sum, component) =>
+                sum +
+                Number(component.available_quantity),
+            0
+        );
+
+
+    const out =
+        total - available;
 
 
     document.getElementById(
@@ -854,7 +1149,10 @@ function escapeHtml(value) {
     const div =
         document.createElement("div");
 
-    div.textContent = value;
+
+    div.textContent =
+        value;
+
 
     return div.innerHTML;
 

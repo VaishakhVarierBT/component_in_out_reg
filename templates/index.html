@@ -9,12 +9,11 @@
     <meta name="viewport"
           content="width=device-width, initial-scale=1.0">
 
-    <title>Component In/Out Register</title>
+    <title>BT Testing Asset Tracking System</title>
 
 
     <link rel="stylesheet"
           href="{{ url_for('static', filename='style.css') }}">
-
 
 </head>
 
@@ -22,175 +21,548 @@
 <body>
 
 
-<div class="container">
+<div class="app-layout">
 
 
     <!-- ====================================================
-         HEADER
+         SIDEBAR
     ===================================================== -->
 
-    <header>
+    <aside class="sidebar">
 
-        <div>
 
-            <h1>
-                Component In/Out Register
-            </h1>
+        <div class="sidebar-header">
 
-            <span class="live">
-                ● LIVE
-            </span>
+            <h2>
+                BT Testing Asset Tracking System
+            </h2>
 
         </div>
 
 
-        <div class="user-section">
+        <nav class="sidebar-nav">
 
-            <span>
-                {{ current_user.full_name }}
-            </span>
 
-            <a href="/logout">
+            <button
+                type="button"
+                class="nav-item active"
+                onclick="showSection('dashboard', this)"
+            >
+
+                Dashboard
+
+            </button>
+
+
+            <button
+                type="button"
+                class="nav-item"
+                onclick="showSection('markOutReturn', this)"
+            >
+
+                Mark Out / Return
+
+            </button>
+
+
+            <button
+                type="button"
+                class="nav-item"
+                onclick="showSection('history', this)"
+            >
+
+                History
+
+            </button>
+
+
+            <button
+                type="button"
+                class="nav-item"
+                onclick="showSection('components', this)"
+            >
+
+                Components
+
+            </button>
+
+
+            <button
+                type="button"
+                class="nav-item"
+                onclick="showSection('employees', this)"
+            >
+
+                Employees
+
+            </button>
+
+
+        </nav>
+
+
+        <div class="sidebar-footer">
+
+            <a
+                href="/logout"
+                class="logout-link"
+            >
+
                 Logout
+
             </a>
 
         </div>
 
-    </header>
 
-
-    <!-- ====================================================
-         STATISTICS
-    ===================================================== -->
-
-    <section class="stats">
-
-
-        <div class="stat-card">
-
-            <span>
-                Total Components
-            </span>
-
-            <strong id="totalComponents">
-                0
-            </strong>
-
-        </div>
-
-
-        <div class="stat-card">
-
-            <span>
-                Currently OUT
-            </span>
-
-            <strong id="currentlyOut">
-                0
-            </strong>
-
-        </div>
-
-
-        <div class="stat-card">
-
-            <span>
-                Available
-            </span>
-
-            <strong id="availableComponents">
-                0
-            </strong>
-
-        </div>
-
-
-    </section>
+    </aside>
 
 
 
     <!-- ====================================================
-         TAKE COMPONENT
+         MAIN CONTENT
     ===================================================== -->
 
-    <section class="card">
-
-        <h2>
-            Take Component
-        </h2>
+    <main class="main-content">
 
 
-        <form id="outForm">
+        <!-- ====================================================
+             HEADER
+        ===================================================== -->
+
+        <header>
 
 
-            <div class="form-grid">
+            <div>
 
+                <h1>
+                    BT Testing Asset Tracking System
+                </h1>
 
-                <div>
-
-                    <label>
-                        Component
-                    </label>
-
-                    <select
-                        id="componentSelect"
-                        required
-                    >
-
-                        <option value="">
-                            Select component
-                        </option>
-
-                    </select>
-
-                </div>
-
-
-                <div>
-
-                    <label>
-                        Employee
-                    </label>
-
-                    <select
-                        id="employeeSelect"
-                        required
-                    >
-
-                        <option value="">
-                            Select employee
-                        </option>
-
-                    </select>
-
-                </div>
-
+                <span class="live">
+                    ● LIVE
+                </span>
 
             </div>
 
 
-            <button type="submit">
-                Mark OUT
-            </button>
+            <div class="user-section">
+
+                <span>
+                    {{ current_user.full_name }}
+                </span>
+
+            </div>
 
 
-        </form>
-
-    </section>
+        </header>
 
 
 
-    <!-- ====================================================
-         ADD COMPONENT / EMPLOYEE
-    ===================================================== -->
+        <!-- ====================================================
+             DASHBOARD
+        ===================================================== -->
 
-    <section class="card">
+        <section
+            id="dashboard"
+            class="page-section active-section"
+        >
 
 
-        <div class="form-grid">
+            <section class="stats">
 
 
-            <div>
+                <div class="stat-card">
+
+                    <span>
+                        Total Quantity
+                    </span>
+
+                    <strong id="totalComponents">
+                        0
+                    </strong>
+
+                </div>
+
+
+                <div class="stat-card">
+
+                    <span>
+                        Currently OUT
+                    </span>
+
+                    <strong id="currentlyOut">
+                        0
+                    </strong>
+
+                </div>
+
+
+                <div class="stat-card">
+
+                    <span>
+                        Available
+                    </span>
+
+                    <strong id="availableComponents">
+                        0
+                    </strong>
+
+                </div>
+
+
+            </section>
+
+
+        </section>
+
+
+
+        <!-- ====================================================
+             MARK OUT / RETURN
+        ===================================================== -->
+
+        <section
+            id="markOutReturn"
+            class="page-section"
+            style="display: none;"
+        >
+
+
+            <!-- ====================================================
+                 TAKE COMPONENT
+            ===================================================== -->
+
+            <section class="card">
+
+
+                <h2>
+                    Take Component
+                </h2>
+
+
+                <form id="outForm">
+
+
+                    <div class="form-grid">
+
+
+                        <div>
+
+                            <label>
+                                Component
+                            </label>
+
+                            <select
+                                id="componentSelect"
+                                required
+                            >
+
+                                <option value="">
+                                    Select component
+                                </option>
+
+                            </select>
+
+                        </div>
+
+
+                        <div>
+
+                            <label>
+                                Quantity
+                            </label>
+
+                            <input
+                                type="number"
+                                id="quantitySelect"
+                                min="1"
+                                value="1"
+                                required
+                            >
+
+                        </div>
+
+
+                        <div>
+
+                            <label>
+                                Employee
+                            </label>
+
+                            <select
+                                id="employeeSelect"
+                                required
+                            >
+
+                                <option value="">
+                                    Select employee
+                                </option>
+
+                            </select>
+
+                        </div>
+
+
+                        <div
+                            id="otherEmployeeFields"
+                            class="other-employee-fields"
+                            style="display: none;"
+                        >
+
+                            <label>
+                                Employee Name
+                            </label>
+
+                            <input
+                                type="text"
+                                id="otherEmployeeName"
+                                placeholder="Enter employee name"
+                            >
+
+
+                            <label>
+                                Designation
+                            </label>
+
+                            <input
+                                type="text"
+                                id="otherDesignation"
+                                placeholder="Enter designation"
+                            >
+
+                        </div>
+
+
+                    </div>
+
+
+                    <button type="submit">
+                        Mark OUT
+                    </button>
+
+
+                </form>
+
+
+            </section>
+
+
+
+            <!-- ====================================================
+                 CURRENTLY OUT
+            ===================================================== -->
+
+            <section class="card">
+
+
+                <div class="section-header">
+
+
+                    <h2>
+                        Currently OUT
+                    </h2>
+
+
+                    <span
+                        id="outCount"
+                        class="count"
+                    >
+
+                        0
+
+                    </span>
+
+
+                </div>
+
+
+                <input
+                    type="text"
+                    id="searchOut"
+                    class="search"
+                    placeholder="Search component or employee..."
+                >
+
+
+                <div class="table-container">
+
+
+                    <table>
+
+
+                        <thead>
+
+                            <tr>
+
+                                <th>
+                                    Component
+                                </th>
+
+                                <th>
+                                    Quantity OUT
+                                </th>
+
+                                <th>
+                                    Quantity Returned
+                                </th>
+
+                                <th>
+                                    Remaining OUT
+                                </th>
+
+                                <th>
+                                    Employee
+                                </th>
+
+                                <th>
+                                    Designation
+                                </th>
+
+                                <th>
+                                    OUT Time
+                                </th>
+
+                                <th>
+                                    Recorded By
+                                </th>
+
+                                <th>
+                                    Action
+                                </th>
+
+                            </tr>
+
+                        </thead>
+
+
+                        <tbody id="outTable">
+
+                        </tbody>
+
+
+                    </table>
+
+
+                </div>
+
+
+            </section>
+
+
+        </section>
+
+
+
+        <!-- ====================================================
+             HISTORY
+        ===================================================== -->
+
+        <section
+            id="history"
+            class="page-section"
+            style="display: none;"
+        >
+
+
+            <section class="card">
+
+
+                <h2>
+                    Complete History
+                </h2>
+
+
+                <input
+                    type="text"
+                    id="searchHistory"
+                    class="search"
+                    placeholder="Search history..."
+                >
+
+
+                <div class="table-container">
+
+
+                    <table>
+
+
+                        <thead>
+
+                            <tr>
+
+                                <th>
+                                    Component
+                                </th>
+
+                                <th>
+                                    Quantity OUT
+                                </th>
+
+                                <th>
+                                    Quantity Returned
+                                </th>
+
+                                <th>
+                                    Employee
+                                </th>
+
+                                <th>
+                                    Designation
+                                </th>
+
+                                <th>
+                                    OUT Time
+                                </th>
+
+                                <th>
+                                    Returned Time
+                                </th>
+
+                                <th>
+                                    Recorded By
+                                </th>
+
+                                <th>
+                                    Status
+                                </th>
+
+                            </tr>
+
+                        </thead>
+
+
+                        <tbody id="historyTable">
+
+                        </tbody>
+
+
+                    </table>
+
+
+                </div>
+
+
+            </section>
+
+
+        </section>
+
+
+
+        <!-- ====================================================
+             COMPONENTS
+        ===================================================== -->
+
+        <section
+            id="components"
+            class="page-section"
+            style="display: none;"
+        >
+
+
+            <section class="card">
+
 
                 <h2>
                     Add Component
@@ -199,21 +571,11 @@
 
                 <form id="componentForm">
 
-                    <label>
-                        Component ID
-                    </label>
-
-                    <input
-                        type="text"
-                        id="newComponentId"
-                        placeholder="e.g. STM32-001"
-                        required
-                    >
-
 
                     <label>
                         Component Name
                     </label>
+
 
                     <input
                         type="text"
@@ -223,17 +585,48 @@
                     >
 
 
+                    <label>
+                        Quantity
+                    </label>
+
+
+                    <input
+                        type="number"
+                        id="newComponentQuantity"
+                        min="1"
+                        placeholder="e.g. 10"
+                        required
+                    >
+
+
                     <button type="submit">
                         Add Component
                     </button>
 
+
                 </form>
 
-            </div>
+
+            </section>
+
+
+        </section>
 
 
 
-            <div>
+        <!-- ====================================================
+             EMPLOYEES
+        ===================================================== -->
+
+        <section
+            id="employees"
+            class="page-section"
+            style="display: none;"
+        >
+
+
+            <section class="card">
+
 
                 <h2>
                     Add Employee
@@ -242,9 +635,11 @@
 
                 <form id="employeeForm">
 
+
                     <label>
                         Employee Name
                     </label>
+
 
                     <input
                         type="text"
@@ -258,6 +653,7 @@
                         Designation
                     </label>
 
+
                     <input
                         type="text"
                         id="newDesignation"
@@ -270,183 +666,33 @@
                         Add Employee
                     </button>
 
+
                 </form>
 
-            </div>
 
+            </section>
 
-        </div>
 
+        </section>
 
-    </section>
 
-
-
-    <!-- ====================================================
-         CURRENTLY OUT
-    ===================================================== -->
-
-    <section class="card">
-
-
-        <div class="section-header">
-
-            <h2>
-                Currently OUT
-            </h2>
-
-            <span
-                id="outCount"
-                class="count"
-            >
-                0
-            </span>
-
-        </div>
-
-
-        <input
-            type="text"
-            id="searchOut"
-            class="search"
-            placeholder="Search component or employee..."
-        >
-
-
-        <div class="table-container">
-
-            <table>
-
-                <thead>
-
-                    <tr>
-
-                        <th>
-                            Component ID
-                        </th>
-
-                        <th>
-                            Component
-                        </th>
-
-                        <th>
-                            Employee
-                        </th>
-
-                        <th>
-                            Designation
-                        </th>
-
-                        <th>
-                            OUT Time
-                        </th>
-
-                        <th>
-                            Recorded By
-                        </th>
-
-                        <th>
-                            Action
-                        </th>
-
-                    </tr>
-
-                </thead>
-
-
-                <tbody id="outTable">
-
-                </tbody>
-
-            </table>
-
-        </div>
-
-    </section>
-
-
-
-    <!-- ====================================================
-         HISTORY
-    ===================================================== -->
-
-    <section class="card">
-
-
-        <h2>
-            Complete History
-        </h2>
-
-
-        <input
-            type="text"
-            id="searchHistory"
-            class="search"
-            placeholder="Search history..."
-        >
-
-
-        <div class="table-container">
-
-            <table>
-
-                <thead>
-
-                    <tr>
-
-                        <th>
-                            Component ID
-                        </th>
-
-                        <th>
-                            Component
-                        </th>
-
-                        <th>
-                            Employee
-                        </th>
-
-                        <th>
-                            Designation
-                        </th>
-
-                        <th>
-                            OUT Time
-                        </th>
-
-                        <th>
-                            Returned Time
-                        </th>
-
-                        <th>
-                            Recorded By
-                        </th>
-
-                        <th>
-                            Status
-                        </th>
-
-                    </tr>
-
-                </thead>
-
-
-                <tbody id="historyTable">
-
-                </tbody>
-
-            </table>
-
-        </div>
-
-    </section>
+    </main>
 
 
 </div>
 
 
 
+<!-- ====================================================
+     SOCKET.IO
+===================================================== -->
+
 <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+
+
+<!-- ====================================================
+     APPLICATION JAVASCRIPT
+===================================================== -->
 
 <script src="{{ url_for('static', filename='script.js') }}"></script>
 

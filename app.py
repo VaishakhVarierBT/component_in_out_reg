@@ -49,6 +49,47 @@ DATABASE = "register.db"
 
 
 # ============================================================
+# TESTING TEAM LOGIN USERS
+#
+# Add / edit usernames and passwords here.
+# Format:
+# ("username", "password", "Full Name", "role")
+# ============================================================
+
+TESTING_TEAM_USERS = [
+    ("vaishakh", "vaishakh123", "Vaishakh Varier", "user"),
+    ("sahil", "sahil123", "Sahil Pankar", "user"),
+    ("snehal", "snehal123", "Snehal", "user"),
+]
+
+
+# ============================================================
+# EMPLOYEE MASTER LIST
+#
+# Add / edit employee names and designations here.
+# Format:
+# ("Employee Name", "Designation")
+# ============================================================
+
+EMPLOYEE_LIST = [
+    ("Nishant S", "General Manager"),
+    ("Vaishnavi N", "Product Manager"),
+    ("Sahil P", "IoT Engineer"),
+    ("Ganesh R", "IoT Engineer"),
+    ("Gayatri S", "IoT Engineer"),
+    ("Snehal B", "Senior Test Engineer"),
+    ("Vaishakh V", "IoT Engineer"),
+    ("Ram G", "Embedded SW Engineer"),
+    ("Dipak D", "HW Team"),
+    ("Preeti", "HW Team"),
+    ("Sharad A", "HW Manager"),
+    ("Sai Teja", "Developer"),
+    ("Prasanna G", "Asst Prod Manager"),
+    ("Aniket S", "RnR"),
+]
+
+
+# ============================================================
 # DATABASE
 # ============================================================
 
@@ -59,6 +100,18 @@ def get_db():
     conn.row_factory = sqlite3.Row
 
     return conn
+
+
+def column_exists(conn, table_name, column_name):
+
+    columns = conn.execute(
+        f"PRAGMA table_info({table_name})"
+    ).fetchall()
+
+    return any(
+        column["name"] == column_name
+        for column in columns
+    )
 
 
 def init_db():
@@ -112,13 +165,74 @@ def init_db():
 
             id INTEGER PRIMARY KEY AUTOINCREMENT,
 
-            component_id TEXT UNIQUE NOT NULL,
+            component_id TEXT UNIQUE,
 
             component_name TEXT NOT NULL,
 
-            status TEXT NOT NULL DEFAULT 'AVAILABLE'
+            status TEXT NOT NULL DEFAULT 'AVAILABLE',
+
+            total_quantity INTEGER NOT NULL DEFAULT 1,
+
+            available_quantity INTEGER NOT NULL DEFAULT 1
 
         )
+    """)
+
+
+    # --------------------------------------------------------
+    # MIGRATE OLD COMPONENT TABLE
+    # --------------------------------------------------------
+
+    if not column_exists(
+        conn,
+        "components",
+        "total_quantity"
+    ):
+
+        conn.execute("""
+            ALTER TABLE components
+            ADD COLUMN total_quantity INTEGER
+            NOT NULL DEFAULT 1
+        """)
+
+
+    if not column_exists(
+        conn,
+        "components",
+        "available_quantity"
+    ):
+
+        conn.execute("""
+            ALTER TABLE components
+            ADD COLUMN available_quantity INTEGER
+            NOT NULL DEFAULT 1
+        """)
+
+
+    # --------------------------------------------------------
+    # MIGRATE OLD COMPONENT STATUS TO QUANTITY
+    # --------------------------------------------------------
+
+    conn.execute("""
+        UPDATE components
+
+        SET total_quantity = 1
+
+        WHERE total_quantity IS NULL
+        OR total_quantity <= 0
+    """)
+
+
+    conn.execute("""
+        UPDATE components
+
+        SET available_quantity =
+            CASE
+                WHEN status = 'OUT' THEN 0
+                ELSE 1
+            END
+
+        WHERE available_quantity IS NULL
     """)
 
 
@@ -136,6 +250,14 @@ def init_db():
             employee_id INTEGER NOT NULL,
 
             recorded_by INTEGER NOT NULL,
+
+            employee_name TEXT,
+
+            designation TEXT,
+
+            quantity_out INTEGER NOT NULL DEFAULT 1,
+
+            quantity_returned INTEGER NOT NULL DEFAULT 0,
 
             out_time TEXT NOT NULL,
 
@@ -156,7 +278,58 @@ def init_db():
     """)
 
 
-    conn.commit()
+    # --------------------------------------------------------
+    # MIGRATE OLD TRANSACTIONS
+    # --------------------------------------------------------
+
+    if not column_exists(
+        conn,
+        "transactions",
+        "employee_name"
+    ):
+
+        conn.execute("""
+            ALTER TABLE transactions
+            ADD COLUMN employee_name TEXT
+        """)
+
+
+    if not column_exists(
+        conn,
+        "transactions",
+        "designation"
+    ):
+
+        conn.execute("""
+            ALTER TABLE transactions
+            ADD COLUMN designation TEXT
+        """)
+
+
+    if not column_exists(
+        conn,
+        "transactions",
+        "quantity_out"
+    ):
+
+        conn.execute("""
+            ALTER TABLE transactions
+            ADD COLUMN quantity_out INTEGER
+            NOT NULL DEFAULT 1
+        """)
+
+
+    if not column_exists(
+        conn,
+        "transactions",
+        "quantity_returned"
+    ):
+
+        conn.execute("""
+            ALTER TABLE transactions
+            ADD COLUMN quantity_returned INTEGER
+            NOT NULL DEFAULT 0
+        """)
 
 
     # --------------------------------------------------------
@@ -192,6 +365,160 @@ def init_db():
             "Administrator",
             "admin"
         ))
+
+
+    # --------------------------------------------------------
+    # CREATE TESTING TEAM USERS
+    # --------------------------------------------------------
+
+    for username, password, full_name, role in TESTING_TEAM_USERS:
+
+        existing_user = conn.execute("""
+            SELECT *
+            FROM users
+            WHERE username = ?
+        """, (username,)).fetchone()
+
+
+        if existing_user is None:
+
+            password_hash = generate_password_hash(
+                password
+            )
+
+            conn.execute("""
+                INSERT INTO users
+                (
+                    username,
+                    password,
+                    full_name,
+                    role
+                )
+
+                VALUES (?, ?, ?, ?)
+            """, (
+                username,
+                password_hash,
+                full_name,
+                role
+            ))
+
+
+    # --------------------------------------------------------
+    # ADD EMPLOYEE MASTER LIST
+    # --------------------------------------------------------
+
+    for employee_name, designation in EMPLOYEE_LIST:
+
+        existing_employee = conn.execute("""
+            SELECT *
+            FROM employees
+            WHERE employee_name = ?
+            AND designation = ?
+        """, (
+            employee_name,
+            designation
+        )).fetchone()
+
+
+        if existing_employee is None:
+
+            conn.execute("""
+                INSERT INTO employees
+                (
+                    employee_name,
+                    designation
+                )
+
+                VALUES (?, ?)
+            """, (
+                employee_name,
+                designation
+            ))
+
+
+    # --------------------------------------------------------
+    # ENSURE OTHER EMPLOYEE EXISTS
+    #
+    # This is only an internal placeholder.
+    # It will not be shown in the normal employee dropdown.
+    # Actual Other person's name/designation is stored
+    # separately in the transaction.
+    # --------------------------------------------------------
+
+    other_employee = conn.execute("""
+        SELECT *
+        FROM employees
+        WHERE employee_name = ?
+        AND designation = ?
+    """, (
+        "__OTHER__",
+        "__OTHER__"
+    )).fetchone()
+
+
+    if other_employee is None:
+
+        conn.execute("""
+            INSERT INTO employees
+            (
+                employee_name,
+                designation
+            )
+
+            VALUES (?, ?)
+        """, (
+            "__OTHER__",
+            "__OTHER__"
+        ))
+
+
+    # --------------------------------------------------------
+    # BACKFILL OLD TRANSACTION EMPLOYEE DETAILS
+    # --------------------------------------------------------
+
+    conn.execute("""
+        UPDATE transactions
+
+        SET
+            employee_name = (
+                SELECT employee_name
+                FROM employees
+                WHERE employees.id = transactions.employee_id
+            ),
+
+            designation = (
+                SELECT designation
+                FROM employees
+                WHERE employees.id = transactions.employee_id
+            )
+
+        WHERE employee_name IS NULL
+        OR designation IS NULL
+    """)
+
+
+    # --------------------------------------------------------
+    # UPDATE QUANTITY VALUES FOR OLD RECORDS
+    # --------------------------------------------------------
+
+    conn.execute("""
+        UPDATE transactions
+
+        SET quantity_out = 1
+
+        WHERE quantity_out IS NULL
+        OR quantity_out <= 0
+    """)
+
+
+    conn.execute("""
+        UPDATE transactions
+
+        SET quantity_returned = 0
+
+        WHERE quantity_returned IS NULL
+    """)
 
 
     conn.commit()
@@ -381,57 +708,98 @@ def add_component():
 
     data = request.json
 
-
-    component_id = data.get(
-        "component_id",
-        ""
-    ).strip()
-
     component_name = data.get(
         "component_name",
         ""
     ).strip()
 
+    quantity = data.get(
+        "quantity",
+        0
+    )
 
-    if not component_id or not component_name:
+
+    try:
+
+        quantity = int(quantity)
+
+    except (TypeError, ValueError):
 
         return jsonify({
             "success": False,
-            "message": "Component ID and name are required."
+            "message": "Quantity must be a valid number."
+        }), 400
+
+
+    if not component_name:
+
+        return jsonify({
+            "success": False,
+            "message": "Component name is required."
+        }), 400
+
+
+    if quantity <= 0:
+
+        return jsonify({
+            "success": False,
+            "message": "Quantity must be greater than zero."
         }), 400
 
 
     conn = get_db()
 
 
-    try:
+    existing = conn.execute("""
+        SELECT *
+        FROM components
+        WHERE LOWER(component_name) = LOWER(?)
+    """, (
+        component_name,
+    )).fetchone()
+
+
+    if existing:
+
+        conn.execute("""
+            UPDATE components
+
+            SET
+                total_quantity =
+                    total_quantity + ?,
+
+                available_quantity =
+                    available_quantity + ?,
+
+                status = 'AVAILABLE'
+
+            WHERE id = ?
+        """, (
+            quantity,
+            quantity,
+            existing["id"]
+        ))
+
+    else:
 
         conn.execute("""
             INSERT INTO components
             (
-                component_id,
                 component_name,
-                status
+                status,
+                total_quantity,
+                available_quantity
             )
 
-            VALUES (?, ?, 'AVAILABLE')
+            VALUES (?, 'AVAILABLE', ?, ?)
         """, (
-            component_id,
-            component_name
+            component_name,
+            quantity,
+            quantity
         ))
 
-        conn.commit()
 
-
-    except sqlite3.IntegrityError:
-
-        conn.close()
-
-        return jsonify({
-            "success": False,
-            "message": "Component ID already exists."
-        }), 400
-
+    conn.commit()
 
     conn.close()
 
@@ -462,6 +830,7 @@ def get_employees():
     rows = conn.execute("""
         SELECT *
         FROM employees
+        WHERE employee_name != '__OTHER__'
         ORDER BY employee_name
     """).fetchall()
 
@@ -485,7 +854,6 @@ def get_employees():
 def add_employee():
 
     data = request.json
-
 
     employee_name = data.get(
         "employee_name",
@@ -557,15 +925,17 @@ def get_records():
 
             t.id,
 
-            c.component_id,
-
             c.component_name,
 
-            e.employee_name,
+            t.employee_name,
 
-            e.designation,
+            t.designation,
 
             u.full_name AS recorded_by,
+
+            t.quantity_out,
+
+            t.quantity_returned,
 
             t.out_time,
 
@@ -577,9 +947,6 @@ def get_records():
 
         JOIN components c
             ON t.component_id = c.id
-
-        JOIN employees e
-            ON t.employee_id = e.id
 
         JOIN users u
             ON t.recorded_by = u.id
@@ -616,16 +983,54 @@ def add_record():
         "component_database_id"
     )
 
+
+    quantity = data.get(
+        "quantity"
+    )
+
+
     employee_id = data.get(
         "employee_id"
     )
 
 
-    if not component_database_id or not employee_id:
+    other_employee_name = data.get(
+        "other_employee_name",
+        ""
+    ).strip()
+
+
+    other_designation = data.get(
+        "other_designation",
+        ""
+    ).strip()
+
+
+    if not component_database_id:
 
         return jsonify({
             "success": False,
-            "message": "Component and employee are required."
+            "message": "Component is required."
+        }), 400
+
+
+    try:
+
+        quantity = int(quantity)
+
+    except (TypeError, ValueError):
+
+        return jsonify({
+            "success": False,
+            "message": "Quantity must be a valid number."
+        }), 400
+
+
+    if quantity <= 0:
+
+        return jsonify({
+            "success": False,
+            "message": "Quantity must be greater than zero."
         }), 400
 
 
@@ -656,17 +1061,111 @@ def add_record():
 
 
     # --------------------------------------------------------
-    # CHECK WHETHER ALREADY OUT
+    # CHECK AVAILABLE QUANTITY
     # --------------------------------------------------------
 
-    if component["status"] == "OUT":
+    if quantity > component["available_quantity"]:
 
         conn.close()
 
         return jsonify({
             "success": False,
-            "message": "This component is already OUT."
+            "message":
+                f"Only {component['available_quantity']} "
+                f"unit(s) of this component are available."
         }), 400
+
+
+    # --------------------------------------------------------
+    # EMPLOYEE
+    # --------------------------------------------------------
+
+    if employee_id == "other":
+
+        if not other_employee_name or not other_designation:
+
+            conn.close()
+
+            return jsonify({
+                "success": False,
+                "message":
+                    "Please enter the name and designation."
+            }), 400
+
+
+        other_employee = conn.execute("""
+            SELECT id
+            FROM employees
+            WHERE employee_name = '__OTHER__'
+            AND designation = '__OTHER__'
+        """).fetchone()
+
+
+        if other_employee is None:
+
+            conn.execute("""
+                INSERT INTO employees
+                (
+                    employee_name,
+                    designation
+                )
+
+                VALUES ('__OTHER__', '__OTHER__')
+            """)
+
+            conn.commit()
+
+
+            other_employee = conn.execute("""
+                SELECT id
+                FROM employees
+                WHERE employee_name = '__OTHER__'
+                AND designation = '__OTHER__'
+            """).fetchone()
+
+
+        employee_database_id = other_employee["id"]
+
+        employee_name = other_employee_name
+
+        designation = other_designation
+
+    else:
+
+        if not employee_id:
+
+            conn.close()
+
+            return jsonify({
+                "success": False,
+                "message": "Employee is required."
+            }), 400
+
+
+        employee = conn.execute("""
+            SELECT *
+            FROM employees
+            WHERE id = ?
+        """, (
+            employee_id,
+        )).fetchone()
+
+
+        if employee is None:
+
+            conn.close()
+
+            return jsonify({
+                "success": False,
+                "message": "Employee not found."
+            }), 404
+
+
+        employee_database_id = employee["id"]
+
+        employee_name = employee["employee_name"]
+
+        designation = employee["designation"]
 
 
     # --------------------------------------------------------
@@ -688,15 +1187,22 @@ def add_record():
             component_id,
             employee_id,
             recorded_by,
+            employee_name,
+            designation,
+            quantity_out,
+            quantity_returned,
             out_time,
             status
         )
 
-        VALUES (?, ?, ?, ?, 'OUT')
+        VALUES (?, ?, ?, ?, ?, ?, 0, ?, 'OUT')
     """, (
         component_database_id,
-        employee_id,
+        employee_database_id,
         current_user.id,
+        employee_name,
+        designation,
+        quantity,
         out_time
     ))
 
@@ -705,17 +1211,34 @@ def add_record():
 
 
     # --------------------------------------------------------
-    # UPDATE COMPONENT STATUS
+    # UPDATE COMPONENT QUANTITY
     # --------------------------------------------------------
+
+    new_available_quantity = (
+        component["available_quantity"] - quantity
+    )
+
+
+    new_status = (
+        "OUT"
+        if new_available_quantity == 0
+        else "AVAILABLE"
+    )
+
 
     conn.execute("""
         UPDATE components
 
-        SET status = 'OUT'
+        SET
+            available_quantity = ?,
+
+            status = ?
 
         WHERE id = ?
     """, (
-        component_database_id,
+        new_available_quantity,
+        new_status,
+        component_database_id
     ))
 
 
@@ -731,15 +1254,17 @@ def add_record():
 
             t.id,
 
-            c.component_id,
-
             c.component_name,
 
-            e.employee_name,
+            t.employee_name,
 
-            e.designation,
+            t.designation,
 
             u.full_name AS recorded_by,
+
+            t.quantity_out,
+
+            t.quantity_returned,
 
             t.out_time,
 
@@ -751,9 +1276,6 @@ def add_record():
 
         JOIN components c
             ON t.component_id = c.id
-
-        JOIN employees e
-            ON t.employee_id = e.id
 
         JOIN users u
             ON t.recorded_by = u.id
@@ -777,6 +1299,11 @@ def add_record():
     )
 
 
+    socketio.emit(
+        "components_changed"
+    )
+
+
     return jsonify({
         "success": True,
         "record": record
@@ -793,6 +1320,9 @@ def add_record():
 )
 @login_required
 def return_component(record_id):
+
+    data = request.json or {}
+
 
     conn = get_db()
 
@@ -816,18 +1346,88 @@ def return_component(record_id):
         }), 404
 
 
-    if transaction["status"] != "OUT":
+    pending_quantity = (
+        transaction["quantity_out"]
+        - transaction["quantity_returned"]
+    )
+
+
+    if pending_quantity <= 0:
 
         conn.close()
 
         return jsonify({
             "success": False,
-            "message": "Component has already been returned."
+            "message": "All quantity has already been returned."
         }), 400
+
+
+    quantity_returned_now = data.get(
+        "quantity_returned",
+        pending_quantity
+    )
+
+
+    try:
+
+        quantity_returned_now = int(
+            quantity_returned_now
+        )
+
+    except (TypeError, ValueError):
+
+        conn.close()
+
+        return jsonify({
+            "success": False,
+            "message": "Return quantity must be a valid number."
+        }), 400
+
+
+    if quantity_returned_now <= 0:
+
+        conn.close()
+
+        return jsonify({
+            "success": False,
+            "message":
+                "Return quantity must be greater than zero."
+        }), 400
+
+
+    if quantity_returned_now > pending_quantity:
+
+        conn.close()
+
+        return jsonify({
+            "success": False,
+            "message":
+                f"Only {pending_quantity} unit(s) "
+                f"are currently OUT."
+        }), 400
+
+
+    new_quantity_returned = (
+        transaction["quantity_returned"]
+        + quantity_returned_now
+    )
+
+
+    fully_returned = (
+        new_quantity_returned
+        == transaction["quantity_out"]
+    )
 
 
     returned_time = datetime.now().strftime(
         "%d-%m-%Y %I:%M:%S %p"
+    )
+
+
+    new_status = (
+        "RETURNED"
+        if fully_returned
+        else "PARTIALLY RETURNED"
     )
 
 
@@ -840,14 +1440,18 @@ def return_component(record_id):
 
         SET
 
+            quantity_returned = ?,
+
             returned_time = ?,
 
-            status = 'RETURNED'
+            status = ?
 
         WHERE id = ?
 
     """, (
-        returned_time,
+        new_quantity_returned,
+        returned_time if fully_returned else None,
+        new_status,
         record_id
     ))
 
@@ -859,12 +1463,49 @@ def return_component(record_id):
     conn.execute("""
         UPDATE components
 
-        SET status = 'AVAILABLE'
+        SET
+
+            available_quantity =
+                available_quantity + ?
 
         WHERE id = ?
 
     """, (
+        quantity_returned_now,
+        transaction["component_id"]
+    ))
+
+
+    # --------------------------------------------------------
+    # UPDATE COMPONENT STATUS
+    # --------------------------------------------------------
+
+    component = conn.execute("""
+        SELECT *
+        FROM components
+        WHERE id = ?
+    """, (
         transaction["component_id"],
+    )).fetchone()
+
+
+    component_status = (
+        "OUT"
+        if component["available_quantity"] == 0
+        else "AVAILABLE"
+    )
+
+
+    conn.execute("""
+        UPDATE components
+
+        SET status = ?
+
+        WHERE id = ?
+
+    """, (
+        component_status,
+        transaction["component_id"]
     ))
 
 
@@ -880,15 +1521,17 @@ def return_component(record_id):
 
             t.id,
 
-            c.component_id,
-
             c.component_name,
 
-            e.employee_name,
+            t.employee_name,
 
-            e.designation,
+            t.designation,
 
             u.full_name AS recorded_by,
+
+            t.quantity_out,
+
+            t.quantity_returned,
 
             t.out_time,
 
@@ -900,9 +1543,6 @@ def return_component(record_id):
 
         JOIN components c
             ON t.component_id = c.id
-
-        JOIN employees e
-            ON t.employee_id = e.id
 
         JOIN users u
             ON t.recorded_by = u.id
@@ -923,6 +1563,11 @@ def return_component(record_id):
     socketio.emit(
         "record_returned",
         record
+    )
+
+
+    socketio.emit(
+        "components_changed"
     )
 
 
